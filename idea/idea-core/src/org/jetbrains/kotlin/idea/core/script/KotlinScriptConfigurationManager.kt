@@ -157,7 +157,7 @@ class KotlinScriptConfigurationManager(
                 updateForFile(file, it)
             }
         }
-    }.any()
+    }.contains(true)
 
     private fun <TF : Any> updateForFile(file: TF, scriptDef: KotlinScriptDefinition): Boolean {
         if (!isValidFile(file)) {
