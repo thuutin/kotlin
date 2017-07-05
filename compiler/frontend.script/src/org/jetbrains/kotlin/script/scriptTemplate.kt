@@ -20,9 +20,11 @@ import java.io.File
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 import kotlin.reflect.KClass
+import kotlin.script.dependencies.DependenciesResolver
+import kotlin.script.dependencies.DependenciesResolver.*
 import kotlin.script.dependencies.ScriptDependencies
-import kotlin.script.dependencies.ScriptDependencyResult
 import kotlin.script.dependencies.ScriptReport
+import kotlin.script.dependencies.StaticDependenciesResolver
 
 const val DEFAULT_SCRIPT_FILE_PATTERN = ".*\\.kts"
 
@@ -118,12 +120,12 @@ private fun<T: Comparable<T>> compareIterables(a: Iterable<T>, b: Iterable<T>): 
 
 private inline fun Int.chainCompare(compFn: () -> Int ): Int = if (this != 0) this else compFn()
 
-class LegacyScriptDependenciesResolverWrapper(val legacyResolver: ScriptDependenciesResolver) : kotlin.script.dependencies.ScriptDependenciesResolver {
+class LegacyScriptDependenciesResolverWrapper(val legacyResolver: ScriptDependenciesResolver) : kotlin.script.dependencies.DependenciesResolver {
 
     override fun resolve(
             scriptContents: kotlin.script.dependencies.ScriptContents,
             environment: Map<String, Any?>
-    ): ScriptDependencyResult {
+    ): ResolveResult {
         val reports = ArrayList<ScriptReport>()
         val legacyDeps = legacyResolver.resolve(
                 object : ScriptContents {
@@ -136,15 +138,15 @@ class LegacyScriptDependenciesResolverWrapper(val legacyResolver: ScriptDependen
                     // TODO_R:
                     TODO("Report")
                 }, null
-        ).get() ?: return ScriptDependencyResult.Failure()
+        ).get() ?: return ResolveResult.Failure()
 
-        val dependencies: ScriptDependencies = object : ScriptDependencies {
-            override val javaHome get() = legacyDeps.javaHome?.let(::File)
-            override val classpath get() = legacyDeps.classpath.toList()
-            override val imports get() = legacyDeps.imports.toList()
-            override val sources get() = legacyDeps.sources.toList()
-            override val scripts get() = legacyDeps.scripts.toList()
-        }
-        return ScriptDependencyResult.Success(dependencies, reports)
+        val dependencies = ScriptDependencies(
+                javaHome = legacyDeps.javaHome?.let(::File),
+                classpath = legacyDeps.classpath.toList(),
+                imports = legacyDeps.imports.toList(),
+                sources = legacyDeps.sources.toList(),
+                scripts = legacyDeps.scripts.toList()
+        )
+        return ResolveResult.Success(dependencies, reports)
     }
 }

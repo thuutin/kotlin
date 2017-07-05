@@ -57,7 +57,7 @@ object ScriptDependenciesFileAttribute {
     fun read(virtualFile: VirtualFile): ScriptDependencies? {
         if (virtualFile !is VirtualFileWithId) return null
         return fileAttributeService.read(virtualFile, ID) { input ->
-            SerializedScriptDependencies(
+            ScriptDependencies(
                     classpath = input.readFileList(),
                     imports = input.readStringList(),
                     javaHome = input.readFile(),
@@ -77,12 +77,3 @@ private fun DataOutput.writeFileList(iterable: Iterable<File>) = writeSeq(this, 
 private fun DataOutput.writeFile(it: File) = writeString(it.canonicalPath)
 private fun DataOutput.writeString(string: String) = writeUTF(this, string)
 private fun DataOutput.writeStringList(iterable: Iterable<String>) = writeSeq(this, iterable.toList()) { writeString(it) }
-
-
-private class SerializedScriptDependencies(
-        override val classpath: List<File>,
-        override val imports: List<String>,
-        override val javaHome: File?,
-        override val scripts: List<File>,
-        override val sources: List<File>
-) : ScriptDependencies

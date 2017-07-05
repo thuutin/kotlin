@@ -38,6 +38,7 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
 import kotlin.script.dependencies.*
+import kotlin.script.dependencies.DependenciesResolver.ResolveResult
 import kotlin.script.templates.ScriptTemplateDefinition
 import kotlin.test.fail
 
@@ -813,13 +814,13 @@ internal val File.loggerCompatiblePath: String
         if (OSKind.current == OSKind.Windows) absolutePath.replace('\\', '/')
         else absolutePath
 
-open class TestKotlinScriptDummyDependenciesResolver : ScriptDependenciesResolver {
+open class TestKotlinScriptDummyDependenciesResolver : DependenciesResolver {
 
-    override fun resolve(scriptContents: ScriptContents, environment: Environment): ScriptDependencyResult {
-        return object : ScriptDependencies {
-            override val classpath = classpathFromClassloader()
-            override val imports = listOf("org.jetbrains.kotlin.scripts.DependsOn", "org.jetbrains.kotlin.scripts.DependsOnTwo")
-        }.asSuccess()
+    override fun resolve(scriptContents: ScriptContents, environment: Environment): ResolveResult {
+        return ScriptDependencies(
+            classpath = classpathFromClassloader(),
+            imports = listOf("org.jetbrains.kotlin.scripts.DependsOn", "org.jetbrains.kotlin.scripts.DependsOnTwo")
+        ).asSuccess()
     }
 }
 

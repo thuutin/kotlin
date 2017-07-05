@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.script.ScriptTemplatesProvider
 import org.jetbrains.kotlin.utils.PathUtil
 import java.io.File
 import kotlin.script.dependencies.*
+import kotlin.script.dependencies.DependenciesResolver.ResolveResult
 import kotlin.script.templates.standard.ScriptTemplateWithArgs
 
 class StandardKotlinScriptTemplateProvider(val project: Project) : ScriptTemplatesProvider {
@@ -41,7 +42,7 @@ class StandardKotlinScriptTemplateProvider(val project: Project) : ScriptTemplat
         )
     }
 
-    override val resolver: ScriptDependenciesResolver = BundledKotlinScriptDependenciesResolver()
+    override val resolver: DependenciesResolver = BundledKotlinScriptDependenciesResolver()
 
     private fun getScriptSDK(project: Project): String? {
         val jdk = PathUtilEx.getAnyJdk(project) ?:
@@ -51,25 +52,22 @@ class StandardKotlinScriptTemplateProvider(val project: Project) : ScriptTemplat
     }
 }
 
-class BundledKotlinScriptDependenciesResolver : ScriptDependenciesResolver {
+class BundledKotlinScriptDependenciesResolver : DependenciesResolver {
     override fun resolve(
             scriptContents: ScriptContents,
             environment: Environment
-    ): ScriptDependencyResult {
+    ): ResolveResult {
         val javaHome = environment.get("sdk") as String?
-        val dependencies = KotlinBundledScriptDependencies(javaHome?.let(::File))
+        val dependencies = ScriptDependencies(
+                javaHome = javaHome?.let(::File),
+                classpath = with(PathUtil.getKotlinPathsForIdeaPlugin()) {
+                    listOf(
+                            reflectPath,
+                            stdlibPath,
+                            scriptRuntimePath
+                    )
+                }
+        )
         return dependencies.asSuccess()
-    }
-}
-
-class KotlinBundledScriptDependencies(override val javaHome: File?) : ScriptDependencies {
-    override val classpath: List<File> get() {
-        return with(PathUtil.getKotlinPathsForIdeaPlugin()) {
-            listOf(
-                    reflectPath,
-                    stdlibPath,
-                    scriptRuntimePath
-            )
-        }
     }
 }

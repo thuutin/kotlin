@@ -46,7 +46,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 import kotlin.script.dependencies.ScriptDependencies
-import kotlin.script.dependencies.experimental.AsyncScriptDependenciesResolver
+import kotlin.script.dependencies.experimental.AsyncDependenciesResolver
 
 
 // NOTE: this service exists exclusively because KotlinScriptConfigurationManager
@@ -190,7 +190,7 @@ class KotlinScriptConfigurationManager(
         }
 
         val dependencyResolver = scriptDef.dependencyResolver
-        if (dependencyResolver is AsyncScriptDependenciesResolver) {
+        if (dependencyResolver is AsyncDependenciesResolver) {
             return updateAsync(file, scriptDef, dependencyResolver)
         }
         return updateSync(file, scriptDef)
@@ -199,7 +199,7 @@ class KotlinScriptConfigurationManager(
     private fun updateAsync(
             file: VirtualFile,
             scriptDefinition: KotlinScriptDefinition,
-            dependencyResolver: AsyncScriptDependenciesResolver
+            dependencyResolver: AsyncDependenciesResolver
     ): Boolean {
         val path = file.path
         val oldDataAndRequest = cache[path]
@@ -223,7 +223,7 @@ class KotlinScriptConfigurationManager(
     private fun sendRequest(
             path: String,
             scriptDef: KotlinScriptDefinition,
-            dependenciesResolver: AsyncScriptDependenciesResolver,
+            dependenciesResolver: AsyncDependenciesResolver,
             file: VirtualFile,
             oldDataAndRequest: DataAndRequest?
     ): Pair<TimeStamp, CompletableFuture<Unit>> {
