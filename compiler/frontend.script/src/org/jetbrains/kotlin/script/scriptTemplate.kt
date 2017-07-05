@@ -20,11 +20,9 @@ import java.io.File
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 import kotlin.reflect.KClass
-import kotlin.script.dependencies.DependenciesResolver
-import kotlin.script.dependencies.DependenciesResolver.*
+import kotlin.script.dependencies.DependenciesResolver.ResolveResult
 import kotlin.script.dependencies.ScriptDependencies
 import kotlin.script.dependencies.ScriptReport
-import kotlin.script.dependencies.StaticDependenciesResolver
 
 const val DEFAULT_SCRIPT_FILE_PATTERN = ".*\\.kts"
 
@@ -120,6 +118,7 @@ private fun<T: Comparable<T>> compareIterables(a: Iterable<T>, b: Iterable<T>): 
 
 private inline fun Int.chainCompare(compFn: () -> Int ): Int = if (this != 0) this else compFn()
 
+@Suppress("DEPRECATION")
 class LegacyScriptDependenciesResolverWrapper(val legacyResolver: ScriptDependenciesResolver) : kotlin.script.dependencies.DependenciesResolver {
 
     override fun resolve(
@@ -135,8 +134,7 @@ class LegacyScriptDependenciesResolverWrapper(val legacyResolver: ScriptDependen
                 },
                 environment,
                 { sev, msg, pos ->
-                    // TODO_R:
-                    TODO("Report")
+                    reports.add(ScriptReport(msg, sev.convertSeverity(), pos?.convertPosition()))
                 }, null
         ).get() ?: return ResolveResult.Failure()
 
@@ -149,4 +147,13 @@ class LegacyScriptDependenciesResolverWrapper(val legacyResolver: ScriptDependen
         )
         return ResolveResult.Success(dependencies, reports)
     }
+
+    private fun ScriptDependenciesResolver.ReportSeverity.convertSeverity(): ScriptReport.Severity  = when(this) {
+        ScriptDependenciesResolver.ReportSeverity.ERROR -> ScriptReport.Severity.ERROR
+        ScriptDependenciesResolver.ReportSeverity.WARNING -> ScriptReport.Severity.WARNING
+        ScriptDependenciesResolver.ReportSeverity.INFO -> ScriptReport.Severity.INFO
+        ScriptDependenciesResolver.ReportSeverity.DEBUG -> ScriptReport.Severity.DEBUG
+    }
+
+    private fun ScriptContents.Position.convertPosition(): ScriptReport.Position = ScriptReport.Position(line, col)
 }
