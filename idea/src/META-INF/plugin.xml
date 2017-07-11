@@ -273,8 +273,8 @@
     <projectService serviceInterface="org.jetbrains.kotlin.idea.core.script.KotlinScriptConfigurationManager"
                     serviceImplementation="org.jetbrains.kotlin.idea.core.script.KotlinScriptConfigurationManager"/>
 
-    <projectService serviceInterface="org.jetbrains.kotlin.script.ScriptErrorManager"
-                    serviceImplementation="org.jetbrains.kotlin.idea.core.script.IdeScriptErrorManager"/>
+    <projectService serviceInterface="org.jetbrains.kotlin.script.ScriptReportSink"
+                    serviceImplementation="org.jetbrains.kotlin.idea.core.script.IdeScriptReportSink"/>
 
     <projectService serviceInterface="org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder"
                     serviceImplementation="org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder"/>
