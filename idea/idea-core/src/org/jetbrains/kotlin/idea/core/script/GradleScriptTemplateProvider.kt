@@ -95,7 +95,7 @@ class GradleKotlinDSLTemplateProvider(project: Project) : AbstractGradleScriptTe
         Regex("^gradle-(?:kotlin-dsl|core).*\\.jar\$")
 ) {
     // TODO_R: check this against kotlin-dsl branch that uses daemon
-    override val additionalResolverClasspath: List<File> =
+    override val additionalResolverClasspath: List<File> get() =
             // additionally need compiler jar to load gradle resolver
             gradleLibDir.listFiles { file -> file.name.startsWith("kotlin-compiler-embeddable") }
                     .firstOrNull()?.let(::listOf).orEmpty()
