@@ -40,10 +40,7 @@ import org.jetbrains.kotlin.cli.common.messages.MessageCollector;
 import org.jetbrains.kotlin.cli.common.output.outputUtils.OutputUtilsKt;
 import org.jetbrains.kotlin.cli.jvm.compiler.EnvironmentConfigFiles;
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment;
-import org.jetbrains.kotlin.config.CommonConfigurationKeys;
-import org.jetbrains.kotlin.config.CompilerConfiguration;
-import org.jetbrains.kotlin.config.ContentRootsKt;
-import org.jetbrains.kotlin.config.Services;
+import org.jetbrains.kotlin.config.*;
 import org.jetbrains.kotlin.incremental.components.LookupTracker;
 import org.jetbrains.kotlin.incremental.js.TranslationResultValue;
 import org.jetbrains.kotlin.js.analyze.TopDownAnalyzerFacadeForJS;
@@ -152,7 +149,7 @@ public class K2JSCompiler extends CLICompiler<K2JSCompilerArguments> {
     ) {
         MessageCollector messageCollector = configuration.getNotNull(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY);
 
-        if (arguments.freeArgs.isEmpty()) {
+        if (!IncrementalCompilation.isEnabledForJs() && arguments.freeArgs.isEmpty()) {
             if (arguments.version) {
                 return OK;
             }
@@ -177,11 +174,6 @@ public class K2JSCompiler extends CLICompiler<K2JSCompilerArguments> {
 
         if (messageCollector.hasErrors()) {
             return ExitCode.COMPILATION_ERROR;
-        }
-
-        if (sourcesFiles.isEmpty()) {
-            messageCollector.report(ERROR, "No source files", null);
-            return COMPILATION_ERROR;
         }
 
         if (arguments.verbose) {
