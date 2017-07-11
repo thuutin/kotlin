@@ -3071,15 +3071,45 @@ public class IrBlackBoxInlineCodegenTestGenerated extends AbstractIrBlackBoxInli
             doTest(fileName);
         }
 
+        @TestMetadata("internalCompanionObject.kt")
+        public void testInternalCompanionObject() throws Exception {
+            String fileName = KotlinTestUtils.navigationMetadata("compiler/testData/codegen/boxInline/syntheticAccessors/internalCompanionObject.kt");
+            doTest(fileName);
+        }
+
+        @TestMetadata("internalCompanionObjectInDifferentPackage.kt")
+        public void testInternalCompanionObjectInDifferentPackage() throws Exception {
+            String fileName = KotlinTestUtils.navigationMetadata("compiler/testData/codegen/boxInline/syntheticAccessors/internalCompanionObjectInDifferentPackage.kt");
+            doTest(fileName);
+        }
+
         @TestMetadata("packagePrivateMembers.kt")
         public void testPackagePrivateMembers() throws Exception {
             String fileName = KotlinTestUtils.navigationMetadata("compiler/testData/codegen/boxInline/syntheticAccessors/packagePrivateMembers.kt");
             doTest(fileName);
         }
 
+        @TestMetadata("privateCompanionObject.kt")
+        public void testPrivateCompanionObject() throws Exception {
+            String fileName = KotlinTestUtils.navigationMetadata("compiler/testData/codegen/boxInline/syntheticAccessors/privateCompanionObject.kt");
+            doTest(fileName);
+        }
+
         @TestMetadata("propertyModifiers.kt")
         public void testPropertyModifiers() throws Exception {
             String fileName = KotlinTestUtils.navigationMetadata("compiler/testData/codegen/boxInline/syntheticAccessors/propertyModifiers.kt");
+            doTest(fileName);
+        }
+
+        @TestMetadata("protectedCompanionObject.kt")
+        public void testProtectedCompanionObject() throws Exception {
+            String fileName = KotlinTestUtils.navigationMetadata("compiler/testData/codegen/boxInline/syntheticAccessors/protectedCompanionObject.kt");
+            doTest(fileName);
+        }
+
+        @TestMetadata("protectedCompanionObjectInDifferentPackage.kt")
+        public void testProtectedCompanionObjectInDifferentPackage() throws Exception {
+            String fileName = KotlinTestUtils.navigationMetadata("compiler/testData/codegen/boxInline/syntheticAccessors/protectedCompanionObjectInDifferentPackage.kt");
             doTest(fileName);
         }
 

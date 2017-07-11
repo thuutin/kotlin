@@ -18029,6 +18029,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
             KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("compiler/testData/codegen/box/syntheticAccessors"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.JVM, true);
         }
 
+        @TestMetadata("forPrivateCompanionObject.kt")
+        public void testForPrivateCompanionObject() throws Exception {
+            String fileName = KotlinTestUtils.navigationMetadata("compiler/testData/codegen/box/syntheticAccessors/forPrivateCompanionObject.kt");
+            doTest(fileName);
+        }
+
         @TestMetadata("jvmNameForAccessors.kt")
         public void testJvmNameForAccessors() throws Exception {
             String fileName = KotlinTestUtils.navigationMetadata("compiler/testData/codegen/box/syntheticAccessors/jvmNameForAccessors.kt");
@@ -18062,6 +18068,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         @TestMetadata("kt9958Interface.kt")
         public void testKt9958Interface() throws Exception {
             String fileName = KotlinTestUtils.navigationMetadata("compiler/testData/codegen/box/syntheticAccessors/kt9958Interface.kt");
+            doTest(fileName);
+        }
+
+        @TestMetadata("privateCompanionObjectInc.kt")
+        public void testPrivateCompanionObjectInc() throws Exception {
+            String fileName = KotlinTestUtils.navigationMetadata("compiler/testData/codegen/box/syntheticAccessors/privateCompanionObjectInc.kt");
             doTest(fileName);
         }
 
