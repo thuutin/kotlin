@@ -74,7 +74,7 @@ import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity.ERROR
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity.STRONG_WARNING
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
-import org.jetbrains.kotlin.cli.common.script.CliScriptErrorManager
+import org.jetbrains.kotlin.cli.common.script.CliScriptReportSink
 import org.jetbrains.kotlin.cli.common.script.KotlinScriptExternalImportsProviderImpl
 import org.jetbrains.kotlin.cli.common.toBooleanLenient
 import org.jetbrains.kotlin.cli.jvm.JvmRuntimeVersionsConsistencyChecker
@@ -107,7 +107,7 @@ import org.jetbrains.kotlin.resolve.lazy.declarations.CliDeclarationProviderFact
 import org.jetbrains.kotlin.resolve.lazy.declarations.DeclarationProviderFactoryService
 import org.jetbrains.kotlin.script.KotlinScriptDefinitionProvider
 import org.jetbrains.kotlin.script.KotlinScriptExternalImportsProvider
-import org.jetbrains.kotlin.script.ScriptErrorManager
+import org.jetbrains.kotlin.script.ScriptReportSink
 import org.jetbrains.kotlin.utils.PathUtil
 import java.io.File
 
@@ -527,7 +527,7 @@ class KotlinCoreEnvironment private constructor(
                 registerService(KotlinJavaPsiFacade::class.java, KotlinJavaPsiFacade(this))
                 registerService(KtLightClassForFacade.FacadeStubCache::class.java, KtLightClassForFacade.FacadeStubCache(this))
                 if (messageCollector != null) {
-                    registerService(ScriptErrorManager::class.java, CliScriptErrorManager(messageCollector))
+                    registerService(ScriptReportSink::class.java, CliScriptReportSink(messageCollector))
                 }
             }
         }
