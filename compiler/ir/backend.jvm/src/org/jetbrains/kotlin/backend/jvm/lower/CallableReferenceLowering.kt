@@ -285,7 +285,7 @@ class CallableReferenceLowering(val context: CommonBackendContext): FileLowering
                         /* unsubstitutedValueParameters = */ valueParameters,
                         /* unsubstitutedReturnType      = */ superFunctionDescriptor.returnType,
                         /* modality                     = */ Modality.FINAL,
-                        /* visibility                   = */ Visibilities.PRIVATE).apply {
+                        /* visibility                   = */ Visibilities.PUBLIC).apply {
                     overriddenDescriptors              +=    superFunctionDescriptor
                     isSuspend                           =    superFunctionDescriptor.isSuspend
                 }
