@@ -66,7 +66,7 @@ abstract class KotlinScriptExternalImportsProviderBase(private val project: Proj
                 scriptContents,
                 (scriptDef as? KotlinScriptDefinitionFromAnnotatedTemplate)?.environment.orEmpty()
         )
-        ServiceManager.getService(project, ScriptErrorManager::class.java)?.setErrors(file, result.reports)
+        ServiceManager.getService(project, ScriptReportSink::class.java)?.attachReports(file, result.reports)
         return result.dependencies
     }
 }
