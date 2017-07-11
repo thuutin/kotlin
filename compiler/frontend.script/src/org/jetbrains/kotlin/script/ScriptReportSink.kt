@@ -14,17 +14,11 @@
  * limitations under the License.
  */
 
-package org.jetbrains.kotlin.idea.core.script
+package org.jetbrains.kotlin.script
 
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.kotlin.script.ScriptErrorManager
 import kotlin.script.dependencies.ScriptReport
 
-class IdeScriptErrorManager : ScriptErrorManager{
-    // TODO_R:
-    override var lastErrors: List<ScriptReport> = emptyList()
-
-    override fun setErrors(scriptFile: VirtualFile, errors: List<ScriptReport>) {
-        lastErrors = errors
-    }
+interface ScriptReportSink {
+    fun attachReports(scriptFile: VirtualFile, reports: List<ScriptReport>)
 }
