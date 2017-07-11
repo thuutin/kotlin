@@ -54,7 +54,6 @@ open class IncrementalJsCache(cachesDir: File) : IncrementalCacheCommon(cachesDi
     }
 
     fun compareAndUpdate(translatedFiles: Map<File, TranslationResultValue>, changesCollector: ChangesCollector) {
-        // todo: add dirty symbols to result
         dirtySources.forEach {
             if (it !in translatedFiles) {
                 translationResults.remove(it, changesCollector)
