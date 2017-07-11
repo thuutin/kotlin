@@ -43,6 +43,7 @@ import org.jetbrains.kotlin.js.facade.TranslationResult
 import org.jetbrains.kotlin.js.facade.TranslationUnit
 import org.jetbrains.kotlin.incremental.js.IncrementalDataProviderImpl
 import org.jetbrains.kotlin.incremental.js.IncrementalResultsConsumerImpl
+import org.jetbrains.kotlin.incremental.js.TranslationResultValue
 import org.jetbrains.kotlin.js.test.utils.DirectiveTestUtils
 import org.jetbrains.kotlin.js.test.utils.JsTestUtils
 import org.jetbrains.kotlin.js.test.utils.verifyAst
@@ -374,9 +375,9 @@ abstract class BasicBoxTest(
 
             val incrementalDir = File(outputDir, "incremental/${outputFile.nameWithoutExtension}")
 
-            for ((i, packagePart) in incrementalService.packageParts.withIndex()) {
+            for ((i, packagePart) in incrementalService.packageParts.values.withIndex()) {
                 FileUtil.writeToFile(File(incrementalDir, "$i.$AST_EXTENSION"), packagePart.binaryAst)
-                FileUtil.writeToFile(File(incrementalDir, "$i.$METADATA_EXTENSION"), packagePart.proto)
+                FileUtil.writeToFile(File(incrementalDir, "$i.$METADATA_EXTENSION"), packagePart.metadata)
             }
 
             incrementalService.headerMetadata?.let {
@@ -428,8 +429,9 @@ abstract class BasicBoxTest(
         if (hasFilesToRecompile) {
             if (additionalMetadata != null) {
                 val (headerFile, packagePartFiles) = additionalMetadata
+                val translatedFiles = packagePartFiles.associate { it to TranslationResultValue(it.readBytes(), kotlin.ByteArray(0)) }
                 configuration.put(JSConfigurationKeys.INCREMENTAL_DATA_PROVIDER,
-                                  IncrementalDataProviderImpl(headerFile.readBytes(), packagePartFiles.map { it.readBytes() }, emptyList()))
+                                  IncrementalDataProviderImpl(headerFile.readBytes(), translatedFiles))
             }
 
             configuration.put(JSConfigurationKeys.INCREMENTAL_RESULTS_CONSUMER, IncrementalResultsConsumerImpl())

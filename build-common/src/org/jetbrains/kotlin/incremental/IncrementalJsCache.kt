@@ -17,7 +17,7 @@
 package org.jetbrains.kotlin.incremental
 
 import com.intellij.util.io.DataExternalizer
-import org.jetbrains.kotlin.incremental.js.IncrementalResultsConsumerImpl
+import org.jetbrains.kotlin.incremental.js.TranslationResultValue
 import org.jetbrains.kotlin.incremental.storage.*
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
@@ -29,7 +29,6 @@ import org.jetbrains.kotlin.serialization.js.JsSerializerProtocol
 import java.io.DataInput
 import java.io.DataOutput
 import java.io.File
-import kotlin.collections.HashSet
 
 open class IncrementalJsCache(cachesDir: File) : IncrementalCacheCommon(cachesDir) {
     companion object {
@@ -54,29 +53,31 @@ open class IncrementalJsCache(cachesDir: File) : IncrementalCacheCommon(cachesDi
         dirtySources.addAll(removedAndCompiledSources)
     }
 
-    fun compareAndUpdate(translatedFiles: Iterable<IncrementalResultsConsumerImpl.PackagePartData>, changesCollector: ChangesCollector) {
-        val sourcesAfterCompile = translatedFiles.mapTo(HashSet()) { it.sourceFile }
+    fun compareAndUpdate(translatedFiles: Map<File, TranslationResultValue>, changesCollector: ChangesCollector) {
         // todo: add dirty symbols to result
         dirtySources.forEach {
-            if (it !in sourcesAfterCompile) {
+            if (it !in translatedFiles) {
                 translationResults.remove(it, changesCollector)
             }
         }
         dirtySources.clear()
 
-        for ((src, proto, binaryAst) in translatedFiles) {
+        for ((src, data) in translatedFiles) {
+            val (proto, binaryAst) = data
             translationResults.put(src, proto, binaryAst, changesCollector)
         }
     }
 
-    fun packagePartsMetadata() =
-        translationResults.keys().filter { File(it) !in dirtySources }.map { translationResults.get(it)!!.metadata }
-
-    fun binaryTrees() =
-        translationResults.keys().filter { File(it) !in dirtySources }.map { translationResults.get(it)!!.binaryAst }
+    fun nonDirtyPackageParts(): Map<File, TranslationResultValue> =
+            hashMapOf<File, TranslationResultValue>().apply {
+                for (path in translationResults.keys()) {
+                    val file = File(path)
+                    if (file !in dirtySources) {
+                        put(file, translationResults[path]!!)
+                    }
+                }
+            }
 }
-
-private class TranslationResultValue(val metadata: ByteArray, val binaryAst: ByteArray)
 
 private object TranslationResultValueExternalizer : DataExternalizer<TranslationResultValue> {
     override fun save(output: DataOutput, value: TranslationResultValue) {
@@ -116,12 +117,11 @@ private class TranslationResultMap(storageFile: File) : BasicStringMap<Translati
         }
     }
 
-    fun get(key: String) = storage[key]
+    operator fun get(key: String): TranslationResultValue? =
+            storage[key]
 
-    fun keys() = storage.keys
-
-    fun values(): Collection<TranslationResultValue> =
-            storage.keys.map { storage[it]!! }
+    fun keys(): Collection<String> =
+            storage.keys
 
     fun remove(file: File, changesCollector: ChangesCollector) {
         val protoBytes = storage[file.canonicalPath]!!.metadata
