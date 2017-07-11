@@ -26,16 +26,14 @@ import com.intellij.lang.annotation.Annotation
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.lang.annotation.HighlightSeverity.*
 import com.intellij.openapi.components.AbstractProjectComponent
-import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
+import org.jetbrains.kotlin.idea.core.script.IdeScriptReportSink
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.script.ScriptErrorManager
 import kotlin.script.dependencies.ScriptReport
 
 class ScriptExternalHighlightingPass(
@@ -47,7 +45,9 @@ class ScriptExternalHighlightingPass(
     override fun doApplyInformationToEditor() {
         val document = document ?: return
 
-        val annotations = getErrors().mapNotNull {
+        val reports = file.virtualFile.getUserData(IdeScriptReportSink.Reports) ?: return
+
+        val annotations = reports.mapNotNull {
             (message, severity, position) ->
             val (startOffset, endOffset) = computeOffsets(document, position) ?: return@mapNotNull null
             Annotation(
@@ -55,7 +55,7 @@ class ScriptExternalHighlightingPass(
                     endOffset,
                     severity.convertSeverity() ?: return@mapNotNull null,
                     message,
-                    null
+                    message
             )
         }
 
@@ -63,19 +63,32 @@ class ScriptExternalHighlightingPass(
         UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument!!, 0, file.textLength, infos, colorsScheme, id)
     }
 
-    // TODO_R: get errors correctly
-    private fun getErrors() = myProject.service<ScriptErrorManager>().lastErrors
-
-    // TODO_R: use API to get endoffset of the error
     private fun computeOffsets(document: Document, position: ScriptReport.Position?): Pair<Int, Int>? {
-        val (line, col) = position ?: return null
-        val offset = document.getLineStartOffset(line) + col
-        if (offset < 0) return null
+        if (position == null) {
+            // TODO: better presentation of those errors
+            // if no position was specified, mark first two lines as an error
+            return computeOffsets(document, ScriptReport.Position(0, 0, 1))
+        }
 
-        val lineEnd = document.getLineEndOffset(line)
-        val indexOfFirst = document.getText(TextRange(offset, lineEnd)).indexOfFirst { it.isWhitespace() }
-        val endOffset = if (indexOfFirst >= 0) offset + indexOfFirst else lineEnd
-        return offset to endOffset
+        val startLine = position.startLine.coerceLineIn(document)
+        val startOffset = document.offsetBy(startLine, position.startColumn)
+
+        val endLine = position.endLine?.coerceAtLeast(startLine)?.coerceLineIn(document) ?: startLine
+        val endOffset = document.offsetBy(
+                endLine,
+                position.endColumn ?: document.getLineEndOffset(endLine)
+        ).coerceAtLeast(startOffset)
+
+        // TODO: presentation when range is empty?
+        return startOffset to endOffset
+    }
+
+    private fun Int.coerceLineIn(document: Document) = coerceIn(0, document.lineCount - 1)
+
+    private fun Document.offsetBy(line: Int, col: Int): Int {
+        val offset = (getLineStartOffset(line) + col).
+                coerceIn(getLineStartOffset(line), getLineEndOffset(line))
+        return offset
     }
 
     private fun ScriptReport.Severity.convertSeverity(): HighlightSeverity? {
