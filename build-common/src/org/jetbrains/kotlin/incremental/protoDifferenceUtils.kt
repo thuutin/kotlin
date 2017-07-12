@@ -35,9 +35,11 @@ data class Difference(
         val changedMembersNames: Set<String> = emptySet()
 )
 
-sealed class ProtoData
-data class ClassProtoData(val proto: ProtoBuf.Class, val nameResolver: NameResolver) : ProtoData()
-data class PackagePartProtoData(val proto: ProtoBuf.Package, val nameResolver: NameResolver, val packageFqName: FqName) : ProtoData()
+sealed class ProtoData {
+    abstract val nameResolver: NameResolver
+}
+data class ClassProtoData(val proto: ProtoBuf.Class, override val nameResolver: NameResolver) : ProtoData()
+data class PackagePartProtoData(val proto: ProtoBuf.Package, override val nameResolver: NameResolver, val packageFqName: FqName) : ProtoData()
 
 fun ProtoMapValue.toProtoData(packageFqName: FqName): ProtoData =
     if (isPackageFacade) {

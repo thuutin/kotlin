@@ -17,15 +17,21 @@
 package org.jetbrains.kotlin.incremental
 
 import com.intellij.util.io.DataExternalizer
+import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.incremental.js.TranslationResultValue
 import org.jetbrains.kotlin.incremental.storage.*
+import org.jetbrains.kotlin.js.backend.ast.JsProgram
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.protobuf.CodedInputStream
+import org.jetbrains.kotlin.serialization.Flags
 import org.jetbrains.kotlin.serialization.ProtoBuf
 import org.jetbrains.kotlin.serialization.deserialization.NameResolverImpl
 import org.jetbrains.kotlin.serialization.js.JsProtoBuf
 import org.jetbrains.kotlin.serialization.js.JsSerializerProtocol
+import org.jetbrains.kotlin.serialization.js.ast.JsAstDeserializer
+import org.jetbrains.kotlin.serialization.js.ast.JsAstProtoBuf
 import java.io.DataInput
 import java.io.DataOutput
 import java.io.File
@@ -111,9 +117,44 @@ private class TranslationResultMap(storageFile: File) : BasicStringMap<Translati
         val oldProtoMap = oldValue?.metadata?.let { getProtoData(file, it) } ?: emptyMap()
         val newProtoMap = getProtoData(file, newMetadata)
 
+        val intersectingInlineFunctions = HashSet<String>()
+
         for (classId in oldProtoMap.keys + newProtoMap.keys) {
-            changesCollector.collectProtoChanges(oldProtoMap[classId], newProtoMap[classId])
+            val oldProto = oldProtoMap[classId]
+            val newProto = newProtoMap[classId]
+            changesCollector.collectProtoChanges(oldProto, newProto)
+
+
+            if (oldProto != null && newProto != null) {
+                intersectingInlineFunctions.addAll(intersectInlineFunctions(oldProto, newProto))
+            }
         }
+
+        if (oldValue == null) return
+
+        if (intersectingInlineFunctions.isNotEmpty()) {
+            val oldChunk = oldValue.binaryAst.parseChunk()
+            val oldProgram = JsProgram()
+            val oldAst = JsAstDeserializer(oldProgram).deserialize(oldChunk)
+
+            val newChunk = newBinaryAst.parseChunk()
+            val newProgram = JsProgram()
+            val newAst = JsAstDeserializer(newProgram).deserialize(newChunk)
+
+            val c = 0
+        }
+    }
+
+    private fun intersectInlineFunctions(oldProto: ProtoData, newProto: ProtoData): Collection<String> {
+        if (oldProto is PackagePartProtoData && newProto is PackagePartProtoData) {
+            val oldInlineFunctions = oldProto.inlineFunctionsNames()
+            if (oldInlineFunctions.isEmpty()) return emptyList()
+
+            val newInlineFunctions = newProto.inlineFunctionsNames()
+            return oldInlineFunctions.intersect(newInlineFunctions)
+        }
+
+        return emptyList()
     }
 
     operator fun get(key: String): TranslationResultValue? =
@@ -154,3 +195,24 @@ fun getProtoData(sourceFile: File, metadata: ByteArray): Map<ClassId, ProtoData>
     }
     return classes
 }
+
+private fun ByteArray.parseChunk() =
+        inputStream().use { input ->
+            val codedInput = CodedInputStream.newInstance(input).apply { setRecursionLimit(4096) }
+            JsAstProtoBuf.Chunk.parseFrom(codedInput)
+        }
+
+private fun PackagePartProtoData.inlineFunctionsNames(): Set<String> {
+    val result = HashSet<String>()
+
+    for (fn in proto.functionList) {
+        if (Flags.IS_INLINE.get(fn.flags) && !fn.isPrivate) {
+            result.add(nameResolver.getString(fn.name))
+        }
+    }
+
+    return result
+}
+
+private inline fun ProtoBuf.Function.name(protoData: ProtoData) =
+        protoData.nameResolver.getString(name)
